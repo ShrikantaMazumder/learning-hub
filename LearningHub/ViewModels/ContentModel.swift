@@ -18,10 +18,16 @@ class ContentModel: ObservableObject {
     @Published var currentLesson: Lesson?
     var currentLessonIndex = 0
     
-    // Current lesson explanation
-    @Published var lessonExplanation = NSAttributedString()
+    // Current question
+    @Published var currentQuestion: Question?
+    var currentQuestionIndex = 0
     
+    // Current lesson explanation
+    @Published var codeText = NSAttributedString()
+    
+    // current content and test selected
     @Published var currentContentSelected: Int?
+    @Published var currentTestSelected: Int?
     
     var styleData: Data?
     
@@ -90,7 +96,7 @@ class ContentModel: ObservableObject {
             currentLessonIndex = 0
         }
         currentLesson = currentModule!.content.lessons[currentLessonIndex]
-        lessonExplanation = addStyle(htmlString: currentLesson!.explanation)
+        codeText = addStyle(htmlString: currentLesson!.explanation)
     }
     
     // MARK: - Has next lesson
@@ -105,11 +111,23 @@ class ContentModel: ObservableObject {
         if currentLessonIndex < currentModule!.content.lessons.count {
             // set next lesson
             currentLesson = currentModule!.content.lessons[currentLessonIndex]
-            lessonExplanation = addStyle(htmlString: currentLesson!.explanation)
+            codeText = addStyle(htmlString: currentLesson!.explanation)
         } else {
             // reset current lesson
             currentLessonIndex = 0
             currentLesson = nil
+        }
+    }
+    
+    // MARK: - Begin Test
+    func beginTest(_ moduleId: Int) {
+        beginModule(moduleId)
+        
+        currentQuestionIndex = 0
+        
+        if currentModule?.test.questions.count ?? 0 > 0 {
+            currentQuestion = currentModule!.test.questions[currentQuestionIndex]
+            codeText = addStyle(htmlString: currentQuestion!.content)
         }
     }
     
