@@ -14,6 +14,13 @@ class ContentModel: ObservableObject {
     @Published var currentModule: Module?
     var currentModuleIndex = 0
     
+    // Find current lesson
+    @Published var currentLesson: Lesson?
+    var currentLessonIndex = 0
+    
+    // Current lesson explanation
+    @Published var lessonExplanation = NSAttributedString()
+    
     var styleData: Data?
     
     init() {
@@ -21,6 +28,7 @@ class ContentModel: ObservableObject {
         getLocalData()
         
     }
+    
     // MARK: - Get local data
     func getLocalData() {
         
@@ -70,6 +78,61 @@ class ContentModel: ObservableObject {
             }
         }
         currentModule = modules[currentModuleIndex]
+    }
+    
+    // MARK: - Current Lesson
+    func beginLesson(_ lessonId: Int) {
+        if lessonId < currentModule!.content.lessons.count {
+            currentLessonIndex = lessonId
+        } else {
+            currentLessonIndex = 0
+        }
+        currentLesson = currentModule!.content.lessons[currentLessonIndex]
+        lessonExplanation = addStyle(htmlString: currentLesson!.explanation)
+    }
+    
+    // MARK: - Has next lesson
+    var hasNextLesson: Bool {
+        return currentLessonIndex + 1 < currentModule!.content.lessons.count
+    }
+    
+    // MARK: - Next lesson
+    func nextLesson() {
+        currentLessonIndex += 1
+        
+        if currentLessonIndex < currentModule!.content.lessons.count {
+            // set next lesson
+            currentLesson = currentModule!.content.lessons[currentLessonIndex]
+            lessonExplanation = addStyle(htmlString: currentLesson!.explanation)
+        } else {
+            // reset current lesson
+            currentLessonIndex = 0
+            currentLesson = nil
+        }
+    }
+    
+    // MARK: - Add style
+    private func addStyle(htmlString:String) -> NSAttributedString {
+        var resultString = NSAttributedString()
+        var data = Data()
+        
+        // add the styling data
+        if let style = styleData {
+            data.append(style)
+        }
+        // add html data
+        data.append(Data(htmlString.utf8))
+        
+        //convwer to attributed string
+        
+            if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
+                
+                resultString = attributedString
+            }
+        
+        
+        
+        return resultString
     }
     
 }
