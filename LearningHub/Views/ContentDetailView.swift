@@ -32,6 +32,7 @@ struct ContentDetailView: View {
                 }, label: {
                     ZStack {
                         RectangleCard()
+                            .foregroundColor(Color.green)
                         Text("Next Lesson")
                             .foregroundColor(.white)
                             .bold()
@@ -44,6 +45,7 @@ struct ContentDetailView: View {
                 }, label: {
                     ZStack {
                         RectangleCard()
+                            .foregroundColor(Color.green)
                         Text("Completed")
                             .foregroundColor(.white)
                             .bold()
