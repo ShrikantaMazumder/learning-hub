@@ -31,12 +31,20 @@ struct ContentDetailView: View {
                     model.nextLesson()
                 }, label: {
                     ZStack {
-                        Rectangle()
-                            .frame(height: 48)
-                            .foregroundColor(Color.green)
-                            .cornerRadius(10)
-                            .shadow(radius: 5)
+                        RectangleCard()
                         Text("Next Lesson")
+                            .foregroundColor(.white)
+                            .bold()
+                    }
+                })
+            } else {
+                // Show completed button instead
+                Button(action: {
+                    model.currentContentSelected = nil
+                }, label: {
+                    ZStack {
+                        RectangleCard()
+                        Text("Completed")
                             .foregroundColor(.white)
                             .bold()
                     }
@@ -53,3 +61,4 @@ struct ContentDetailView_Previews: PreviewProvider {
         ContentDetailView()
     }
 }
+
