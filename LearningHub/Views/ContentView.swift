@@ -16,7 +16,8 @@ struct ContentView: View {
                 if model.currentModule != nil {
                     ForEach(0..<model.currentModule!.content.lessons.count) { index in
                         NavigationLink(
-                            destination: ContentDetailView().onAppear(perform: {
+                            destination: ContentDetailView()
+                                .onAppear(perform: {
                                 model.beginLesson(index)
                             }),
                             label: {

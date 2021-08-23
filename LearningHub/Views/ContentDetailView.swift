@@ -26,7 +26,7 @@ struct ContentDetailView: View {
             CodeTextView()
             
             // Show next button
-            if model.hasNextLesson {
+            if model.hasNextLesson() {
                 Button(action: {
                     model.nextLesson()
                 }, label: {

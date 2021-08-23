@@ -12,9 +12,11 @@ struct TestView: View {
     @State var selectedAnsIndex: Int?
     @State var submitted = false
     @State var numCorrect = 0
+    @State var resultView = false
     
     var body: some View {
-        if let currentQuestion = model.currentQuestion {
+        if model.currentQuestion != nil && resultView == false {
+           
             VStack(alignment: .leading) {
                 // Question number
                 Text("Question \(model.currentQuestionIndex + 1) of \(model.currentModule?.test.questions.count ?? 0)")
@@ -26,7 +28,7 @@ struct TestView: View {
                 // Options
             ScrollView {
                 VStack(spacing: 10) {
-                    ForEach(0..<currentQuestion.answers.count, id:\.self) {index in
+                    ForEach(0..<model.currentQuestion!.answers.count, id:\.self) {index in
                         
                             
                             Button(action: {
@@ -38,10 +40,10 @@ struct TestView: View {
                                         RectangleCard()
                                             .foregroundColor(index == selectedAnsIndex ? Color(.systemGray5) : .white)
                                     } else {
-                                        if index == selectedAnsIndex && index == currentQuestion.correctIndex || index == currentQuestion.correctIndex {
+                                        if index == selectedAnsIndex && index == model.currentQuestion!.correctIndex || index == model.currentQuestion!.correctIndex {
                                             RectangleCard()
                                                 .foregroundColor(.green)
-                                        } else if index == selectedAnsIndex && index != currentQuestion.correctIndex {
+                                        } else if index == selectedAnsIndex && index != model.currentQuestion!.correctIndex {
                                             RectangleCard()
                                                 .foregroundColor(.red)
                                         } else {
@@ -49,7 +51,7 @@ struct TestView: View {
                                                 .foregroundColor(.white)
                                         }
                                     }
-                                    Text(currentQuestion.answers[index])
+                                    Text(model.currentQuestion!.answers[index])
                                 }
                             })
                             .disabled(submitted)
@@ -62,15 +64,26 @@ struct TestView: View {
                 
                 // Button
                 Button(action: {
-                    self.submitted = true
-                    if selectedAnsIndex == currentQuestion.correctIndex {
-                        numCorrect += 1
+                    if submitted {
+                        if  model.currentQuestionIndex + 1 == model.currentModule!.test.questions.count {
+                            self.resultView = true
+                        } else {
+                            model.nextQuestion()
+                            self.submitted = false
+                            selectedAnsIndex = nil
+                        }
+                        
+                    } else {
+                        self.submitted = true
+                        if selectedAnsIndex == model.currentQuestion!.correctIndex {
+                            numCorrect += 1
+                        }
                     }
                 }, label: {
                     ZStack {
                         RectangleCard()
                             .foregroundColor(.green)
-                    Text("Submit")
+                        Text(buttonText)
                         .bold()
                         .foregroundColor(.white)
                     }
@@ -79,8 +92,28 @@ struct TestView: View {
                 .padding()
             }
             .navigationBarTitle("\(model.currentModule?.category ?? "") Test")
+        } else if resultView {
+            TestResultView(marks: numCorrect)
         } else {
             ProgressView()
+        }
+    }
+    
+    var buttonText: String {
+        
+        // Check if answer has been submitted
+        if submitted == true {
+            if model.currentQuestionIndex + 1 == model.currentModule!.test.questions.count {
+                // This is the last question
+                return "Finish"
+            }
+            else {
+                // There is a next question
+                return "Next"
+            }
+        }
+        else {
+            return "Submit"
         }
     }
 }

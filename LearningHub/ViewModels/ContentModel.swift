@@ -8,13 +8,15 @@
 import Foundation
 
 class ContentModel: ObservableObject {
-    // all module list
+    
+    // List of modules
     @Published var modules = [Module]()
-    // find current module
+    
+    // Current module
     @Published var currentModule: Module?
     var currentModuleIndex = 0
     
-    // Find current lesson
+    // Current lesson
     @Published var currentLesson: Lesson?
     var currentLessonIndex = 0
     
@@ -24,20 +26,20 @@ class ContentModel: ObservableObject {
     
     // Current lesson explanation
     @Published var codeText = NSAttributedString()
-    
-    // current content and test selected
-    @Published var currentContentSelected: Int?
-    @Published var currentTestSelected: Int?
-    
     var styleData: Data?
+    
+    // Current selected content and test
+    @Published var currentContentSelected:Int?
+    @Published var currentTestSelected:Int?
+    
     
     init() {
         
         getLocalData()
-        
+        getRemoteData()
     }
     
-    // MARK: - Get local data
+    // MARK: - Data methods
     func getLocalData() {
         
         // Get a url to the json file
@@ -76,83 +78,152 @@ class ContentModel: ObservableObject {
         
     }
     
-    // MARK: - Module Navigation method
-    func beginModule(_ moduleId: Int) {
-        // Find the index for the module id
+    // MARK: - Remote data
+    func getRemoteData() {
+        let urlString = "https://codewithchris.github.io/learningapp-data/data2.json"
+        let url = URL(string: urlString)
+        guard url != nil else {
+            return
+        }
+        
+        let request = URLRequest(url: url!)
+        let session = URLSession.shared
+        
+        let dataTask = session.dataTask(with: request) { data, response, error in
+            guard error == nil else {
+                // There was error
+                return
+            }
+            
+            // parse data
+            do {
+                let decoder = JSONDecoder()
+                let modules = try decoder.decode([Module].self, from: data!)
+                self.modules += modules
+            } catch {
+                print(error)
+            }
+        }
+        
+        dataTask.resume()
+    }
+    
+    // MARK: - Module navigation methods
+    
+    func beginModule(_ moduleid:Int) {
+        
+        // Find the index for this module id
         for index in 0..<modules.count {
-            if modules[index].id == moduleId {
+            
+            if modules[index].id == moduleid {
+            
+                // Found the matching module
                 currentModuleIndex = index
                 break
             }
         }
+        
+        // Set the current module
         currentModule = modules[currentModuleIndex]
     }
     
-    // MARK: - Current Lesson
-    func beginLesson(_ lessonId: Int) {
-        if lessonId < currentModule!.content.lessons.count {
-            currentLessonIndex = lessonId
-        } else {
+    func beginLesson(_ lessonIndex:Int) {
+        
+        // Check that the lesson index is within range of module lessons
+        if lessonIndex < currentModule!.content.lessons.count {
+            currentLessonIndex = lessonIndex
+        }
+        else {
             currentLessonIndex = 0
         }
+        
+        // Set the current lesson
         currentLesson = currentModule!.content.lessons[currentLessonIndex]
-        codeText = addStyle(htmlString: currentLesson!.explanation)
+        codeText = addStyling(currentLesson!.explanation)
     }
     
-    // MARK: - Has next lesson
-    var hasNextLesson: Bool {
-        return currentLessonIndex + 1 < currentModule!.content.lessons.count
-    }
-    
-    // MARK: - Next lesson
     func nextLesson() {
+        
+        // Advance the lesson index
         currentLessonIndex += 1
         
+        // Check that it is within range
         if currentLessonIndex < currentModule!.content.lessons.count {
-            // set next lesson
+            
+            // Set the current lesson property
             currentLesson = currentModule!.content.lessons[currentLessonIndex]
-            codeText = addStyle(htmlString: currentLesson!.explanation)
-        } else {
-            // reset current lesson
+            codeText = addStyling(currentLesson!.explanation)
+        }
+        else {
+            // Reset the lesson state
             currentLessonIndex = 0
             currentLesson = nil
         }
     }
     
-    // MARK: - Begin Test
-    func beginTest(_ moduleId: Int) {
+    func hasNextLesson() -> Bool {
+        
+        return (currentLessonIndex + 1 < currentModule!.content.lessons.count)
+    }
+    
+    func beginTest(_ moduleId:Int) {
+        
+        // Set the current module
         beginModule(moduleId)
         
+        // Set the current question index
         currentQuestionIndex = 0
         
-        if currentModule?.test.questions.count ?? 0 > 0 {
+        // If there are questions, set the current question to the first one
+        if currentModule?.test.questions.count ?? 0  > 0 {
             currentQuestion = currentModule!.test.questions[currentQuestionIndex]
-            codeText = addStyle(htmlString: currentQuestion!.content)
+            
+            // Set the question content
+            codeText = addStyling(currentQuestion!.content)
         }
     }
     
-    // MARK: - Add style
-    private func addStyle(htmlString:String) -> NSAttributedString {
+    func nextQuestion() {
+        
+        // Advance the question index
+        currentQuestionIndex += 1
+        
+        // Check that it's within the range of questions
+        if currentQuestionIndex < currentModule!.test.questions.count {
+            
+            // Set the current question
+            currentQuestion = currentModule!.test.questions[currentQuestionIndex]
+            codeText = addStyling(currentQuestion!.content)
+        }
+        else {
+            // If not, then reset the properties
+            currentQuestionIndex = 0
+            currentQuestion = nil
+        }
+        
+    }
+    
+    // MARK: - Code Styling
+    
+    private func addStyling(_ htmlString: String) -> NSAttributedString {
+        
         var resultString = NSAttributedString()
         var data = Data()
         
-        // add the styling data
-        if let style = styleData {
-            data.append(style)
+        // Add the styling data
+        if styleData != nil {
+            data.append(styleData!)
         }
-        // add html data
+        
+        // Add the html data
         data.append(Data(htmlString.utf8))
         
-        //convwer to attributed string
-        
-            if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
-                
-                resultString = attributedString
-            }
-        
-        
+        // Convert to attributed string
+        if let attributedString = try? NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
+            
+            resultString = attributedString
+        }
         
         return resultString
     }
-    
 }
