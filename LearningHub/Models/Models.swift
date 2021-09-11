@@ -21,7 +21,7 @@ struct Content: Decodable, Identifiable {
     var image: String = ""
     var time: String = ""
     var description: String = ""
-    var lessons: [Lesson] = [Lesson()]
+    var lessons: [Lesson] = []
     
 }
 
@@ -41,7 +41,7 @@ struct Test: Decodable, Identifiable {
     var image: String = ""
     var time: String = ""
     var description: String = ""
-    var questions: [Question] = [Question()]
+    var questions: [Question] = []
 }
 
 struct Question: Decodable, Identifiable {

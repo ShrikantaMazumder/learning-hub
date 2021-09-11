@@ -39,12 +39,84 @@ class ContentModel: ObservableObject {
     init() {
         
         getLocalData()
-        getDatabaseModules()
+        getModules()
         
 //        getRemoteData()
     }
     
-    func getDatabaseModules() {
+    
+    
+    // MARK: - Data methods
+    func getLessons(module: Module, completion: @escaping () -> Void) {
+        
+        // specify
+        let collection = db.collection("modules").document(module.id).collection("lessons")
+        //Get documents
+        collection.getDocuments { snapshot, error in
+            
+            if error == nil && snapshot != nil {
+                // Array to track lessons
+                var lessons = [Lesson]()
+                
+                // loop through lessons
+                for doc in snapshot!.documents {
+                    var temp = Lesson()
+                    temp.id = doc["id"] as? String ?? UUID().uuidString
+                    temp.title = doc["title"] as? String ?? ""
+                    temp.duration = doc["duration"] as? String ?? ""
+                    temp.explanation = doc["explanation"] as? String ?? ""
+                    temp.video = doc["video"] as? String ?? ""
+                    // append lessons
+                    lessons.append(temp)
+                }
+             
+                for (index, mods) in self.modules.enumerated() {
+                    
+                    if mods.id == module.id {
+                        self.modules[index].content.lessons = lessons
+                    }
+                }
+                // call completion closure
+                completion()
+            }
+        }
+    }
+    
+    // get questions
+    func getQuestions(module: Module, completion: @escaping () -> Void) {
+        // specify collection path
+        let collection = db.collection("modules").document(module.id).collection("questions")
+        // get documents
+        collection.getDocuments { snapshot, error in
+            if error == nil && snapshot != nil {
+                var questions = [Question]()
+                
+                //loop through docs
+                for doc in snapshot!.documents {
+                    var temp = Question()
+                    temp.id = doc["id"] as? String ?? UUID().uuidString
+                    temp.answers = doc["answers"] as? [String] ?? [String]()
+                    temp.correctIndex = doc["correctIndex"] as? Int ?? 0
+                    temp.content = doc["content"] as? String ?? ""
+                    // append to questions
+                    questions.append(temp)
+                }
+                
+                
+                for (index, mods) in self.modules.enumerated() {
+                    
+                    if mods.id == module.id {
+                        self.modules[index].test.questions = questions
+                    }
+                }
+                
+                completion()
+            }
+        }
+    }
+    
+    // MARK: - Get modules from database
+    func getModules() {
         // specify collection path
         let collection = db.collection("modules")
         // get documents
@@ -85,7 +157,6 @@ class ContentModel: ObservableObject {
         }
     }
     
-    // MARK: - Data methods
     func getLocalData() {
         
         /*
