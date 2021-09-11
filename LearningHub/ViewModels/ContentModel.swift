@@ -6,8 +6,11 @@
 //
 
 import Foundation
+import Firebase
 
 class ContentModel: ObservableObject {
+    
+    let db = Firestore.firestore()
     
     // List of modules
     @Published var modules = [Module]()
@@ -36,12 +39,56 @@ class ContentModel: ObservableObject {
     init() {
         
         getLocalData()
-        getRemoteData()
+        getDatabaseModules()
+        
+//        getRemoteData()
+    }
+    
+    func getDatabaseModules() {
+        // specify collection path
+        let collection = db.collection("modules")
+        // get documents
+        collection.getDocuments { snapshot, error in
+            if error == nil && snapshot != nil {
+                var modules = [Module]()
+                
+                for doc in snapshot!.documents {
+                    // create a new module instance
+                    var m = Module()
+                    // parse module from documents
+                    m.id = doc["id"] as? String ?? UUID().uuidString
+                    m.category = doc["category"] as? String ?? ""
+                    
+                    // parse the lesson
+                    let contentMap = doc["content"] as! [String:Any]
+                    m.content.id = contentMap["id"] as? String ?? ""
+                    m.content.description = contentMap["description"] as? String ?? ""
+                    m.content.image = contentMap["image"] as? String ?? ""
+                    m.content.time = contentMap["time"] as? String ?? ""
+                    
+                    // parse the question
+                    let testMap = doc["test"] as! [String:Any]
+                    m.test.id = testMap["id"] as? String ?? ""
+                    m.test.description = testMap["description"] as? String ?? ""
+                    m.test.image = testMap["image"] as? String ?? ""
+                    m.test.time = testMap["time"] as? String ?? ""
+                    
+                    //add it to local module array
+                    modules.append(m)
+                }
+                
+                // assign module to published property
+                DispatchQueue.main.async {
+                    self.modules = modules
+                }
+            }
+        }
     }
     
     // MARK: - Data methods
     func getLocalData() {
         
+        /*
         // Get a url to the json file
         let jsonUrl = Bundle.main.url(forResource: "data", withExtension: "json")
         
@@ -60,7 +107,9 @@ class ContentModel: ObservableObject {
             // TODO log error
             print("Couldn't parse local data")
         }
-        
+            */
+ 
+ 
         // Parse the style data
         let styleUrl = Bundle.main.url(forResource: "style", withExtension: "html")
         
@@ -110,7 +159,7 @@ class ContentModel: ObservableObject {
     
     // MARK: - Module navigation methods
     
-    func beginModule(_ moduleid:Int) {
+    func beginModule(_ moduleid:String) {
         
         // Find the index for this module id
         for index in 0..<modules.count {
@@ -166,7 +215,7 @@ class ContentModel: ObservableObject {
         return (currentLessonIndex + 1 < currentModule!.content.lessons.count)
     }
     
-    func beginTest(_ moduleId:Int) {
+    func beginTest(_ moduleId:String) {
         
         // Set the current module
         beginModule(moduleId)
