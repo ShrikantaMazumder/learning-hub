@@ -15,7 +15,7 @@ struct LearningHubApp: App {
     }
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            LaunchView()
                 .environmentObject(ContentModel())
         }
     }

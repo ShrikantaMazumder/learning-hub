@@ -8,9 +8,13 @@
 import Foundation
 import Firebase
 
+
 class ContentModel: ObservableObject {
     
     let db = Firestore.firestore()
+    
+    // authentication
+    @Published var isLoggedIn = false
     
     // List of modules
     @Published var modules = [Module]()
@@ -38,12 +42,12 @@ class ContentModel: ObservableObject {
     
     init() {
         
-        getLocalData()
-        getModules()
-        
-//        getRemoteData()
     }
     
+    // MARK: - Authentication check
+    func checkLogin() {
+        isLoggedIn = Auth.auth().currentUser != nil ? true : false
+    }
     
     
     // MARK: - Data methods
